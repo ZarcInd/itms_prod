@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>No Network Zones</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+
+  <style>
+    html, body { margin: 0; padding: 0; height: 100%; font-family: sans-serif; }
+    #map { width: 100%; height: 100vh; }
+
+    #controls {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 1001;
+      background: white;
+      padding: 10px;
+      border-radius: 6px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.3);
+    }
+
+    #heading {
+      position: absolute;
+      top: 10px;
+      left: 20px;
+      z-index: 1001;
+      background: rgba(255,255,255,0.9);
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-weight: bold;
+      box-shadow: 0 0 6px rgba(0,0,0,0.2);
+    }
+
+    #loaderOverlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(255, 255, 255, 0.8);
+      z-index: 2000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #loaderOverlay img {
+      width: 80px;
+      height: 80px;
+    }
+  </style>
+</head>
+<body>
+
+<div id="heading" style="padding-left: 22px;margin-left: 35px;">No Network Zones - Date: <span id="selectedDateText">--</span></div>
+
+<div id="controls">
+  <label for="dateInput">Date:</label>
+  <input type="date" id="dateInput" />
+  <button onclick="loadPoints()">Show</button>
+</div>
+
+<div id="loaderOverlay">
+  <img src="https://i.gifer.com/ZZ5H.gif" alt="Loading..." />
+</div>
+
+<div id="map"></div>
+
+<script>
+const map = L.map('map').setView([13.05, 80.25], 11);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '&copy; OpenStreetMap contributors'
+}).addTo(map);
+
+let markerClusterGroup = L.markerClusterGroup();
+map.addLayer(markerClusterGroup);
+
+function formatDateToKey(d) {
+  return d.replace(/-/g, '');
+}
+
+function showLoader(show = true) {
+  const overlay = document.getElementById('loaderOverlay');
+  overlay.style.display = show ? 'flex' : 'none';
+  document.body.style.pointerEvents = show ? 'none' : 'auto';
+}
+
+function loadPoints() {
+  const date = document.getElementById('dateInput').value;
+  if (!date) return alert("Select a date");
+
+  const dateKey = formatDateToKey(date);
+  showLoader(true);
+
+  fetch(`get_heatmap_data.php?date=${dateKey}`)
+    .then(res => res.json())
+    .then(data => {
+      showLoader(false);
+      markerClusterGroup.clearLayers();
+      document.getElementById("selectedDateText").innerText = date;
+
+      if (!data.length) {
+        alert("No 'No Network' zones found for this date.");
+        return;
+      }
+
+      const bounds = [];
+
+      data.forEach(point => {
+        const marker = L.circleMarker([point.lat, point.lon], {
+          radius: 8,
+          color: 'blue',
+          fillColor: 'blue',
+          fillOpacity: 0.9
+        }).bindPopup(`
+          <strong>No Network</strong><br>
+          Lat: ${point.lat}<br>
+          Lon: ${point.lon}
+        `);
+        markerClusterGroup.addLayer(marker);
+        bounds.push([point.lat, point.lon]);
+      });
+
+      if (bounds.length) {
+        map.fitBounds(bounds, { padding: [50, 50] });
+      }
+    })
+    .catch(err => {
+      showLoader(false);
+      console.error("Fetch error:", err);
+      alert("Failed to load data");
+    });
+}
+</script>
+
+</body>
+</html>

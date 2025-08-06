@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Config Manager</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <style>
+      body {
+        background-color: #f8f9fa;
+      }
+      .container {
+        background: #ffffff;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+      }
+      h2 {
+        color: #007bff;
+      }
+      .btn-primary {
+        background-color: #007bff;
+        border-color: #007bff;
+      }
+      .btn-secondary {
+        background-color: #6c757d;
+        border-color: #6c757d;
+      }
+      .btn-danger {
+        background-color: #dc3545;
+        border-color: #dc3545;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="configList"></div>
+    <div class="container mt-5">
+      <h2 class="mb-4">Add Server Config</h2>
+      <form id="configForm">
+        <div class="row mb-3">
+          <!-- <div class="col-md-6">
+            <label for="IMEI" class="form-label">IMEI</label>
+            <input
+              type="text"
+              class="form-control"
+              id="imei"
+              name="imei"
+              required
+            />
+          </div> -->
+          <div class="col-md-6">
+            <label for="CONFIG_ID" class="form-label">ID</label>
+            <input
+              type="text"
+              class="form-control"
+              id="CONFIG_ID"
+              name="CONFIG_ID"
+            />
+          </div>
+          <div class="col-md-6">
+            <label for="NAME" class="form-label">NAME</label>
+            <input
+              type="text"
+              class="form-control"
+              id="NAME"
+              name="NAME"
+              required
+            />
+          </div>
+        </div>
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <label for="URL" class="form-label">URL</label>
+            <input type="text" class="form-control" id="URL" name="URL" />
+          </div>
+          <div class="col-md-6">
+            <label for="PORT" class="form-label">PORT</label>
+            <input type="number" class="form-control" id="PORT" name="PORT" />
+          </div>
+        </div>
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <label for="INTERVAL" class="form-label">INTERVAL</label>
+            <input
+              type="number"
+              class="form-control"
+              id="INTERVAL"
+              name="INTERVAL"
+            />
+          </div>
+          <div class="col-md-6">
+            <label for="DURATION" class="form-label">DURATION</label>
+            <input
+              type="number"
+              class="form-control"
+              id="DURATION"
+              name="DURATION"
+            />
+          </div>
+        </div>
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <label for="PAGE" class="form-label">PAGE</label>
+            <input type="text" class="form-control" id="PAGE" name="PAGE" />
+          </div>
+          <div class="col-md-6">
+            <label for="TIMEFORMAT" class="form-label">TIMEFORMAT</label>
+            <input
+              type="text"
+              class="form-control"
+              id="TIMEFORMAT"
+              name="TIMEFORMAT"
+            />
+          </div>
+        </div>
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <label for="DATESTRING" class="form-label">DATESTRING</label>
+            <input
+              type="text"
+              class="form-control"
+              id="DATESTRING"
+              name="DATESTRING"
+            />
+          </div>
+          <div class="col-md-6">
+            <label for="APIKEY" class="form-label">APIKEY</label>
+            <input type="text" class="form-control" id="APIKEY" name="APIKEY" />
+          </div>
+        </div>
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <label for="OTASTATUS" class="form-label">OTASTATUS</label>
+            <input
+              type="text"
+              class="form-control"
+              id="OTASTATUS"
+              name="OTASTATUS"
+            />
+          </div>
+          <div class="col-md-6">
+            <label for="IP" class="form-label">IP</label>
+            <input type="text" class="form-control" id="IP" name="IP" />
+          </div>
+        </div>
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <label for="HARSHALERTS" class="form-label">HARSHALERTS</label>
+            <input
+              type="text"
+              class="form-control"
+              id="HARSHALERTS"
+              name="HARSHALERTS"
+            />
+          </div>
+          <div class="col-md-6">
+            <label for="STOREPACKET" class="form-label">STOREPACKET</label>
+            <input
+              type="text"
+              class="form-control"
+              id="STOREPACKET"
+              name="STOREPACKET"
+            />
+          </div>
+        </div>
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <label for="depo_name" class="form-label">Depo Name</label>
+            <input
+              type="text"
+              class="form-control"
+              id="depo_name"
+              name="depo_name"
+            />
+          </div>
+          <div class="col-md-6">
+            <label for="fleet_no" class="form-label">Fleet No</label>
+            <input
+              type="text"
+              class="form-control"
+              id="fleet_no"
+              name="fleet_no"
+            />
+          </div>
+        </div>
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <label for="PROTOCOL" class="form-label">PROTOCOL</label>
+            <input
+              type="text"
+              class="form-control"
+              id="PROTOCOL"
+              name="PROTOCOL"
+            />
+          </div>
+          <div class="col-md-6">
+            <label for="STATUS" class="form-label">STATUS</label>
+            <select class="form-select" id="STATUS" name="STATUS">
+              <option value="1">Active</option>
+              <option value="0">Inactive</option>
+            </select>
+          </div>
+        </div>
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <label for="TOPIC" class="form-label">TOPIC</label>
+            <input type="text" class="form-control" id="TOPIC" name="TOPIC" />
+          </div>
+          <!-- <div class="col-md-6">
+            <label for="STATUS" class="form-label">STATUS</label>
+            <select class="form-select" id="STATUS" name="STATUS">
+              <option value="1">Active</option>
+              <option value="0">Inactive</option>
+            </select>
+          </div> -->
+        </div>
+        <div id="customFields"></div>
+        <button type="button" class="btn btn-secondary" id="addField">
+          Add Custom Field
+        </button>
+        <button type="submit" class="btn btn-primary">
+          Save Configuration
+        </button>
+      </form>
+    </div>
+
+    <script>
+      $(document).ready(function () {
+        // const imei = new URLSearchParams(window.location.search).get("imei");
+
+        // if (imei) {
+        //   $("#imei").val(imei);
+        // }
+
+        const groupId = new URLSearchParams(window.location.search).get(
+          "group_id"
+        );
+
+        if (!groupId) {
+          document.write("Invalid URL");
+          return;
+        }
+
+        $("#addField").click(function () {
+          $("#customFields").append(`
+                    <div class="row mb-3 custom-field">
+                        <div class="col-md-5">
+                            <input type="text" class="form-control" form="no-exist" name="custom_keys[]" placeholder="FIELD NAME (UPPERCASE)" required>
+                        </div>
+                        <div class="col-md-5">
+                            <input type="text" class="form-control" form="no-exist" name="custom_values[]" placeholder="Field Value" required>
+                        </div>
+                        <div class="col-md-2">
+                            <button type="button" class="btn btn-danger removeField">Remove</button>
+                        </div>
+                    </div>
+                `);
+        });
+
+        $(document).on("click", ".removeField", function () {
+          $(this).closest(".custom-field").remove();
+        });
+
+        $("#configForm").submit(function (e) {
+          e.preventDefault();
+
+          let formData = new FormData(this);
+
+          // Collect custom fields in a structured JSON format
+          let customFields = [];
+          $(".custom-field").each(function () {
+            let key = $(this)
+              .find('input[name="custom_keys[]"]')
+              .val()
+              .toUpperCase();
+            let value = $(this).find('input[name="custom_values[]"]').val();
+            if (key && value) {
+              customFields.push({ key: key, value: value });
+            }
+          });
+
+          // Convert the custom fields array to a JSON string and append it
+          formData.append("custom_fields", JSON.stringify(customFields));
+
+          formData.append("group_id", groupId);
+
+          // Send data via AJAX
+          $.ajax({
+            url: "/config/add.php",
+            type: "POST",
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function (response) {
+              try {
+                let data = JSON.parse(response);
+                alert(data.message);
+                if (data.status === "success") {
+                  $("#configForm")[0].reset();
+                  $("#customFields").empty();
+                }
+              } catch (e) {
+                let data = response;
+                alert(data);
+              }
+            },
+          });
+        });
+      });
+    </script>
+  </body>
+</html>

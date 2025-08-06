@@ -1,0 +1,59 @@
+# Set PHP config
+php_value date.timezone Asia/Calcutta
+
+# Enable mod_rewrite
+RewriteEngine On
+
+# Enforce HTTPS
+RewriteCond %{HTTPS}  !=on
+RewriteRule ^/?(.*) https://%{SERVER_NAME}/$1 [R,L]
+
+# Remove www
+RewriteCond %{HTTP_HOST} ^www.(.*)$
+RewriteRule ^(.*)$ http://%1/$1 [L,R=301]
+
+#### Apache routing ####
+
+# Route 
+# RewriteRule ^know$ device_setup.php [L] # Old route
+RewriteCond %{REQUEST_URI} ^/know
+RewriteRule ^know/([0-9]+)$ device_setup.php?imei=$1 [L]
+
+# Rewrite rules for config
+RewriteCond %{REQUEST_URI} ^/config
+RewriteRule ^config/$ config/index.html [L]
+RewriteRule ^config/[?](.+)$ config/index.html?$1 [L]
+RewriteRule ^config$ config/index.html [L]
+RewriteRule ^config[?](.+)$ config/index.html?$1 [L]
+RewriteRule ^config/(.+).php(.*)$ config/$1.php$2 [L]
+RewriteRule ^config/(.+).csv(.*)$ config/$1.csv$2 [L]
+RewriteRule ^config/(.+).css(.*)$ config/$1.css$2 [L]
+RewriteRule ^config/(.+).js(.*)$ config/$1.js$2 [L]
+RewriteRule ^config/(.+).html(.*)$ config/$1.html$2 [L]
+RewriteRule ^config/(.+)[?](.*)$ config/$1.html?$2 [L]
+RewriteRule ^config/(.+)$ config/$1.html [L]
+
+# Rewrite rules for latest_data_view
+RewriteCond %{REQUEST_URI} ^/latest_data_view/ [NC]
+RewriteRule ^latest_data_view/(.*)$ latest_data_view/$1 [L]
+
+# Rewrite rules for .well-known
+RewriteCond %{REQUEST_URI} ^/.well-known/pki-validation/ [NC]
+RewriteRule ^.well-known/pki-validation/(.*)$ .well-known/pki-validation/$1 [L]
+
+
+# Rewrite rules for stats
+RewriteCond %{REQUEST_URI} ^/stats
+RewriteRule ^stats/$ stats/index.html [L]
+RewriteRule ^stats/[?](.+)$ stats/index.html?$1 [L]
+RewriteRule ^stats$ stats/index.html [L]
+RewriteRule ^stats[?](.+)$ stats/index.html?$1 [L]
+RewriteRule ^stats/(.+).php(.*)$ stats/$1.php$2 [L]
+RewriteRule ^stats/(.+).css(.*)$ stats/$1.css$2 [L]
+RewriteRule ^stats/(.+).js(.*)$ stats/$1.js$2 [L]
+RewriteRule ^stats/(.+).html(.*)$ stats/$1.html$2 [L]
+RewriteRule ^stats/(.+)[?](.*)$ stats/$1.html?$2 [L]
+RewriteRule ^stats/(.+)$ stats/$1.html [L]
+
+RewriteCond %{REQUEST_URI} !^/public/
+RewriteRule ^(.*)$ /public/$1 [L,QSA]

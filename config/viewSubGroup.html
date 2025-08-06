@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>View Groups</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/css/select2.min.css"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+      body {
+        background-color: #f8f9fa;
+      }
+
+      .container {
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        margin-top: 30px;
+      }
+
+      h2,
+      h4 {
+        text-align: center;
+        margin-bottom: 20px;
+        color: #007bff;
+      }
+
+      .table th {
+        background-color: #007bff;
+        color: white;
+      }
+
+      .btn-primary {
+        background-color: #007bff;
+        border: none;
+        transition: 0.3s;
+      }
+
+      .btn-primary:hover {
+        background-color: #0056b3;
+      }
+
+      .details-box {
+        background: #f1f1f1;
+        padding: 10px;
+        border-radius: 5px;
+        font-size: 14px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+      <h2>Sub Groups</h2>
+      <h4>Group Name: <span id="group_name"></span></h4>
+      <div class="row mb-3">
+        <div class="col-md-6">
+          <button
+            class="btn btn-primary btn-sm"
+            onclick="redirect('/config/addSubGroup.html', true)"
+          >
+            Add New Sub Group
+          </button>
+          <button
+            class="btn btn-primary btn-sm"
+            onclick="redirect('/config/addOTA.html', true)"
+          >
+            Add New OTA
+          </button>
+          <button
+            class="btn btn-primary btn-sm"
+            onclick="redirect('/config/addXML.html', true)"
+          >
+            Add New XML Update
+          </button>
+        </div>
+        <div class="col-md-6"></div>
+      </div>
+      <table class="table table-bordered table-hover">
+        <thead>
+          <tr>
+            <th>Sub Group Name</th>
+            <th>IMEIs Count</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="groupsTableBody">
+          <tr>
+            <td colspan="3" class="text-center">Loading...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <!-- Bootstrap Modal -->
+    <div
+      class="modal fade"
+      id="imeiListModal"
+      tabindex="-1"
+      aria-labelledby="modalTitle"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="modalTitle">IMEI List</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <p id="modalContent">Loading...</p>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/js/select2.min.js"></script>
+    <script>
+      $(document).ready(function () {
+        const groupId = new URLSearchParams(window.location.search).get(
+          "group_id"
+        );
+        const groupName = new URLSearchParams(window.location.search).get(
+          "group_name"
+        );
+        if (!groupId) {
+          document.write("Invalid URL");
+          return;
+        }
+
+        $("#group_name").text(groupName ?? "NA");
+
+        const url = `/config/group_list_subgroup.php?group_id=${groupId}`;
+        $.getJSON(url, function (response) {
+          if (response.status === "success") {
+            let rows = "";
+            $.each(response.data, function (name, group) {
+              console.log(group);
+              rows += `<tr>
+                                    <td>${group.group_name ?? "NA"}</td>
+                                    <td>${group.imei_count}</td>
+                                    <td>
+                                      <button class="btn btn-primary btn-sm" onclick="openModal('${
+                                        group.id
+                                      }')">View IMEIs</button>
+                                      <button class="btn btn-primary btn-sm" onclick="redirect('/config/viewOTA.html?sub_group_id=${
+                                        group.id
+                                      }', true)">View OTA</button>
+                                      <button class="btn btn-primary btn-sm" onclick="redirect('/config/addOTA.html?sub_group_id=${
+                                        group.id
+                                      }', true)">Create OTA</button>
+                                      <button class="btn btn-primary btn-sm" onclick="redirect('/config/viewXML.html?sub_group_id=${
+                                        group.id
+                                      }', true)">View XML Updates</button>
+                                      <button class="btn btn-primary btn-sm" onclick="redirect('/config/addXML.html?sub_group_id=${
+                                        group.id
+                                      }', true)">Create XML Updates</button>
+                                    </td>
+                                 </tr>`;
+            });
+            $("#groupsTableBody").html(
+              rows ||
+                '<tr><td colspan="3" class="text-center">No Group found.</td></tr>'
+            );
+          } else {
+            $("#groupsTableBody").html(
+              '<tr><td colspan="3" class="text-center">Error loading groups.</td></tr>'
+            );
+          }
+        });
+      });
+
+      function manageConfig(id) {
+        window.location.href =
+          "/config/view.html?group_id=" + encodeURIComponent(id);
+      }
+
+      function openModal(id) {
+        $("#modalContent").text("Fetching data..."); // Show loading text
+
+        $.ajax({
+          url: `/config/group_list_subgroup_imei.php?sub_group_id=${id}`,
+          type: "GET",
+          dataType: "json",
+          success: function (response) {
+            // Set modal content
+            $("#modalTitle").text("IMEI List");
+            let html =
+              "<table class='table table-bordered table-hover'><thead><th>S.No.</th><th>IMEI</th></thead><tbody>";
+            for (let index in response.data) {
+              const sr = index - 0 + 1;
+              html += `<tr><td>${sr}</td><td>${response.data[index].imei}</td></tr>`;
+            }
+            html += "</tbody></table>";
+            $("#modalContent").html(html);
+
+            // Show the modal
+            $("#imeiListModal").modal("show");
+          },
+          error: function () {
+            $("#modalContent").text("Error fetching data.");
+            $("#imeiListModal").modal("show");
+          },
+        });
+      }
+
+      function redirect(url, addGroupIdQueryParam) {
+        const groupId = new URLSearchParams(window.location.search).get(
+          "group_id"
+        );
+
+        url = new URL(url, "http://dummy.com");
+        if (addGroupIdQueryParam && groupId)
+          url.searchParams.append("group_id", groupId);
+        url = url.pathname + url.search;
+        url = url.replace("http://dummy.com", "");
+
+        window.location.href = url;
+      }
+    </script>
+  </body>
+</html>

@@ -1,0 +1,5 @@
+Vehicle no,Vehicle code,DeviceID,City,Agency,Operator,Depot,VehicleType,Seating Capacity,Region,Etim Frequency,GST On Ticket,Surcharge On Ticket,Collection On Etim,GPS From Etim,Forward to Shuttl,Service Category,Fuel Type,Dispatch Type,Route Name,Service Start Time,Service End Time
+K0372,TN01AN4588,862607059042258,chennai,MTC,MTC chennai,Ambathur Depot,Bus,N/A,N/A,N/A,No,No,No,No,No,N/A,Diesel,N/A,"Ambattur Industrial Estate Road, Sector 1, Ambattur Industrial Estate, Chennai 600058, India",N/A,N/A
+J1052,TN01AN2052,863412047322667,chennai,MTC,MTC chennai,Iyyappanthangal Depot,Bus,N/A,N/A,N/A,No,No,No,No,No,N/A,Diesel,N/A,"J. V. Beach House, DR Basant Road, Triplicane, Chennai 600005, India",N/A,N/A
+J1571,TN01AN2989,863418055860522,chennai,MTC,MTC chennai,Chromepet-1 Depot,Bus,N/A,N/A,N/A,No,No,No,No,No,N/A,Diesel,N/A,"Vandalur Kelambakkam Main Road, Vandalur, Chennai 600048, India",N/A,N/A
+J1161,TN01AN2147,866758049534809,chennai,MTC,MTC chennai,Thiruvottriyur Depot,Bus,N/A,N/A,N/A,No,No,No,No,No,N/A,Diesel,N/A,"1/5 E V R Periyar Salai, Koyambedu, Chennai 600107, India",N/A,N/A

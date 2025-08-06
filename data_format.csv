@@ -1,0 +1,2 @@
+packet hader,Mode,Type,packet_type,firmware_version,device_id,ignition,driver_id,time,date,gps,lat,lat_dir,lon,lon_dir,speed_knots,network,route_no,speed_kmh,odo_meter,Led_health_1,Led_health_2,Led_health_3,Led_health_4,
+&PEIS,N,VTS,LP,ITS_AL_v0.37,865546042801833,IGNON,0,17:38:35,27/01/25,A,1300.658599,N,8012.895503,E,6,-1,19,0,0,0,0,0,0,#

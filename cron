@@ -1,0 +1,3 @@
+# Log cleanup for ilcoder.service
+0 */2 * * * /bin/journalctl -u ilcoder --vacuum-time=1d
+0 */2 * * * /bin/journalctl -u ilcoder --vacuum-size=100M

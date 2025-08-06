@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Export ITMS Data</title>
+  <style>
+    #progress, #downloadSection {
+      display: none;
+      margin-top: 20px;
+    }
+    button:disabled {
+      opacity: 0.6;
+      pointer-events: none;
+    }
+    #status {
+      margin-bottom: 8px;
+    }
+    #eta {
+      color: #555;
+      font-style: italic;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <h2>Export ITMS Data</h2>
+
+  <label>Select Date:
+    <input type="date" id="exportDate">
+  </label>
+  <button id="exportBtn" onclick="startExport()">Export</button>
+
+  <div id="progress">
+    <p id="status">Preparing export...</p>
+    <progress id="bar" value="0" max="100" style="width: 100%;"></progress>
+    <p id="eta">ETA: Calculating...</p>
+  </div>
+
+  <div id="downloadSection">
+    <p>Export complete!</p>
+    <button id="downloadBtn">Download ZIP</button>
+  </div>
+
+  <script>
+    async function startExport() {
+      const date = document.getElementById('exportDate').value;
+      const exportBtn = document.getElementById('exportBtn');
+      const progress = document.getElementById('progress');
+      const status = document.getElementById('status');
+      const bar = document.getElementById('bar');
+      const etaText = document.getElementById('eta');
+      const downloadSection = document.getElementById('downloadSection');
+      const downloadBtn = document.getElementById('downloadBtn');
+
+      if (!date) return alert('Please select a date first.');
+
+      exportBtn.disabled = true;
+      progress.style.display = 'block';
+      downloadSection.style.display = 'none';
+      bar.value = 0;
+      status.textContent = "Initializing...";
+      etaText.textContent = "ETA: Calculating...";
+
+      // Step 1: Get total chunks
+      const initRes = await fetch(`export.php?action=init&date=${date}`);
+      const initData = await initRes.json();
+
+      if (!initData.total || !initData.chunks) {
+        alert("No data found.");
+        exportBtn.disabled = false;
+        return;
+      }
+
+      const totalChunks = initData.chunks;
+      let completedChunks = 0;
+      let times = [];
+
+      bar.max = totalChunks;
+
+      // Step 2: Loop over chunks
+      for (let chunk = 0; chunk < totalChunks; chunk++) {
+        const startTime = performance.now();
+
+        status.textContent = `Exporting chunk ${chunk + 1} of ${totalChunks}...`;
+
+        try {
+          await fetch(`export.php?action=chunk&date=${date}&chunk=${chunk}`);
+        } catch (err) {
+          alert("Error exporting chunk " + (chunk + 1));
+          break;
+        }
+
+        const duration = (performance.now() - startTime) / 1000;
+        times.push(duration);
+        completedChunks++;
+        bar.value = completedChunks;
+
+        const avgTime = times.reduce((a, b) => a + b, 0) / times.length;
+        const remainingChunks = totalChunks - completedChunks;
+        const eta = avgTime * remainingChunks;
+
+        const mins = Math.floor(eta / 60);
+        const secs = Math.floor(eta % 60);
+        etaText.textContent = `ETA: ${mins}m ${secs}s`;
+      }
+
+      // Step 3: Finalize ZIP
+      status.textContent = "Finalizing ZIP...";
+      etaText.textContent = "";
+
+      const zipRes = await fetch(`finalize.php?date=${date}`);
+      const zipBlob = await zipRes.blob();
+
+      // Step 4: Prepare download button
+      downloadSection.style.display = 'block';
+      downloadBtn.onclick = () => {
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(zipBlob);
+        link.download = `itms_export_${date}.zip`;
+        link.click();
+      };
+
+      status.textContent = "Export complete!";
+      exportBtn.disabled = false;
+    }
+  </script>
+</body>
+</html>

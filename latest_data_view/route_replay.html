@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Route Replay</title>
+  <meta charset="utf-8"/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"/>
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet"/>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body, html { 
+      margin: 0; 
+      padding: 0; 
+      height: 100%; 
+      overflow: hidden; 
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    
+    #map { 
+      height: calc(100vh - 60px);
+      width: 100%; 
+      margin-top: 60px;
+      transition: all 0.3s ease;
+      border-top: 1px solid rgba(0,0,0,0.1);
+    }
+    
+    #controls { 
+      padding: 8px 15px; 
+      background: linear-gradient(135deg, #2c3e50 0%, #3498db 50%, #9b59b6 100%);
+      color: white;
+      display: flex; 
+      flex-direction: column;
+      gap: 8px; 
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1001;
+      border-bottom: 3px solid rgba(255,255,255,0.1);
+    }
+    
+    .controls-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      padding: 2px 0;
+    }
+    
+    .control-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 1;
+      background: rgba(255,255,255,0.08);
+      padding: 4px 8px;
+      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.1);
+      min-width: 0;
+    }
+    
+    .control-group label {
+      font-weight: 600;
+      font-size: 12px;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+      flex-shrink: 0;
+      color: rgba(255,255,255,0.95);
+      white-space: nowrap;
+    }
+    
+    select, input, button { 
+      padding: 5px 8px;
+      border: none;
+      border-radius: 4px;
+      font-size: 12px;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      flex-shrink: 1;
+      font-weight: 500;
+      min-width: 0;
+      white-space: nowrap;
+    }
+    
+    select:focus, input:focus {
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(255,255,255,0.3);
+    }
+    
+    button {
+      background: linear-gradient(135deg, rgba(255,255,255,0.95), rgba(255,255,255,0.85));
+      color: #333;
+      font-weight: 700;
+      cursor: pointer;
+      border: 2px solid rgba(255,255,255,0.2);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    button:hover {
+      background: linear-gradient(135deg, #ffffff, #f8f9fa);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+    }
+    
+    button:active {
+      transform: translateY(-1px);
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, #28a745, #20c997);
+      color: white;
+      border: 2px solid rgba(255,255,255,0.3);
+    }
+    
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #218838, #1abc9c);
+    }
+    
+    .btn-secondary {
+      background: linear-gradient(135deg, #007bff, #6f42c1);
+      color: white;
+      border: 2px solid rgba(255,255,255,0.3);
+    }
+    
+    .btn-secondary:hover {
+      background: linear-gradient(135deg, #0056b3, #5a2d91);
+    }
+    
+    .btn-control {
+      background: linear-gradient(135deg, #fd7e14, #e83e8c);
+      color: white;
+      min-width: 35px;
+      border: 2px solid rgba(255,255,255,0.3);
+    }
+    
+    .btn-control:hover {
+      background: linear-gradient(135deg, #e8590c, #d91a72);
+    }
+    
+    #info { 
+      font-weight: 600;
+      font-size: 12px;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+      width: 100%;
+      text-align: left;
+      background: rgba(255,255,255,0.15);
+      padding: 8px 12px;
+      border-radius: 6px;
+      line-height: 1.4;
+      border: 1px solid rgba(255,255,255,0.2);
+      backdrop-filter: blur(10px);
+      display: none;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    #vehicleOverlay { 
+      display: none; 
+      position: fixed; 
+      top: 180px; 
+      left: 25px; 
+      background: linear-gradient(135deg, rgba(255,255,255,0.98), rgba(248,249,250,0.95)); 
+      padding: 15px; 
+      border-radius: 10px; 
+      box-shadow: 0 10px 35px rgba(0,0,0,0.2);
+      backdrop-filter: blur(15px);
+      z-index: 1000; 
+      font-size: 13px; 
+      line-height: 1.8em; 
+      width: 280px;
+      border: 2px solid rgba(255,255,255,0.3);
+    }
+    
+    #vehicleOverlay .vehicle-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      padding: 4px 0;
+      border-bottom: 1px solid rgba(0,0,0,0.08);
+      transition: all 0.3s ease;
+    }
+    
+    #vehicleOverlay .vehicle-row:hover {
+      background: rgba(0,0,0,0.02);
+      border-radius: 4px;
+      padding: 4px 6px;
+    }
+    
+    #vehicleOverlay .vehicle-row:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+    }
+    
+    #vehicleOverlay .vehicle-label {
+      color: #2c3e50;
+      font-weight: 700;
+      min-width: 100px;
+      font-size: 12px;
+    }
+    
+    #vehicleOverlay .vehicle-value {
+      color: #34495e;
+      font-weight: 600;
+      text-align: right;
+      flex: 1;
+      font-size: 12px;
+    }
+    
+    #loader { 
+      position: fixed; 
+      top: 0; 
+      left: 0; 
+      width: 100%; 
+      height: 100%; 
+      background: rgba(255,255,255,0.95);
+      backdrop-filter: blur(5px);
+      z-index: 9999; 
+      display: none; 
+      justify-content: center; 
+      align-items: center;
+      flex-direction: column;
+    }
+    
+    .spinner { 
+      border: 4px solid #f3f3f3; 
+      border-top: 4px solid #667eea; 
+      border-radius: 50%; 
+      width: 50px; 
+      height: 50px;
+      animation: spin 1s linear infinite; 
+      margin-bottom: 20px;
+    }
+    
+    .loading-text {
+      color: #666;
+      font-weight: 600;
+      font-size: 16px;
+    }
+    
+    @keyframes spin { 
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); } 
+    }
+    
+    .speed-label { 
+      font-size: 16px; 
+      font-weight: bold;
+    }
+    
+    .timestamp-popup { 
+      background: rgba(255, 193, 7, 0.95);
+      color: #333;
+      padding: 6px 10px; 
+      border-radius: 6px; 
+      font-size: 11px;
+      font-weight: bold;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(255,193,7,0.5);
+      border: 2px solid #fff;
+    }
+   .speed-popup-marker {
+  background: transparent !important;
+  border: none !important;
+}
+
+.speed-popup-box {
+  background: white;
+  border: 2px solid #333;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 12px;
+  font-weight: bold;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  color: #333;
+  white-space: nowrap;
+  position: relative;
+}
+
+.speed-popup-box::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border: 5px solid transparent;
+  border-top-color: #333;
+}
+
+    
+    .select2-container--default .select2-selection--single {
+      height: 32px !important;
+      border-radius: 4px !important;
+      border: 1px solid rgba(0,0,0,0.1) !important;
+      background: white !important;
+    }
+    
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+      line-height: 30px !important;
+      padding-left: 8px !important;
+      font-size: 12px !important;
+      font-weight: 500 !important;
+    }
+    
+    .gap-tooltip {
+      background: rgba(255, 193, 7, 0.95) !important;
+      color: #333 !important;
+      font-weight: bold !important;
+      border: 2px solid #fff !important;
+      border-radius: 6px !important;
+      font-size: 12px !important;
+      box-shadow: 0 2px 8px rgba(255,193,7,0.4) !important;
+    }
+    
+    .gap-tooltip::before {
+      border-top-color: #FFD700 !important;
+    }
+    
+    .timestamp-tooltip {
+      background: rgba(138, 43, 226, 0.95) !important;
+      color: white !important;
+      font-weight: bold !important;
+      border: 2px solid #fff !important;
+      border-radius: 6px !important;
+      font-size: 12px !important;
+      box-shadow: 0 2px 8px rgba(138,43,226,0.4) !important;
+    }
+    
+    @media (max-width: 768px) {
+      #controls {
+        padding: 6px 8px;
+        gap: 6px;
+        overflow-x: auto;
+      }
+      
+      .control-group {
+        gap: 4px;
+      }
+      
+      .control-group label {
+        font-size: 11px;
+      }
+      
+      select, input, button {
+        padding: 4px 6px;
+        font-size: 11px;
+      }
+      
+      #vehicleOverlay {
+        width: 200px;
+        padding: 10px;
+        left: 10px;
+        top: 65px;
+      }
+      
+      #vehicleOverlay strong {
+        width: 80px;
+      }
+      
+      #info {
+        font-size: 10px;
+      }
+      
+      #map {
+        height: calc(100vh - 55px);
+        margin-top: 55px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="loader">
+    <div class="spinner"></div>
+    <div class="loading-text">Loading route data...</div>
+  </div>
+
+  <div id="controls">
+    <div class="controls-row">
+      <div class="control-group">
+        <label>Device:</label>
+        <select id="deviceSelect" class="js-example-basic-single" style="width:180px;">
+          <option value="">Select</option>
+        </select>
+      </div>
+      
+      <div class="control-group">
+        <label>Date:</label>
+        <input type="date" id="dateInput"/>
+      </div>
+      
+      <div class="control-group">
+        <label>From:</label>
+        <input type="time" id="fromTime"/>
+      </div>
+      
+      <div class="control-group">
+        <label>To:</label>
+        <input type="time" id="toTime"/>
+      </div>
+      
+      <div class="control-group">
+        <label>Speed:</label>
+        <select id="speedControl">
+          <option value="500">2x</option>
+          <option value="200">5x</option>
+          <option value="100">10x</option>
+        </select>
+      </div>
+      
+      <button id="showBtn" onclick="loadRoute()" class="btn-primary">Show</button>
+      <button onclick="playRoute()" class="btn-secondary">Play</button>
+      <button onclick="pauseRoute()" class="btn-secondary">Pause</button>
+      <button onclick="stepBackward()" class="btn-control"><<</button>
+      <button onclick="stepForward()" class="btn-control">>></button>
+    </div>
+    
+    <div class="controls-row">
+      <span id="info"></span>
+    </div>
+  </div>
+
+  <div id="map"></div>
+
+  <div id="vehicleOverlay">
+    <div class="vehicle-row">
+      <span class="vehicle-label">Vehicle No:</span>
+      <span class="vehicle-value" id="v_no">–</span>
+    </div>
+    <div class="vehicle-row">
+      <span class="vehicle-label">Vehicle Code:</span>
+      <span class="vehicle-value" id="v_code">–</span>
+    </div>
+    <div class="vehicle-row">
+      <span class="vehicle-label">Depot:</span>
+      <span class="vehicle-value" id="v_depot">–</span>
+    </div>
+    <div class="vehicle-row">
+      <span class="vehicle-label">Route Name:</span>
+      <span class="vehicle-value" id="v_route">–</span>
+    </div>
+    <div class="vehicle-row">
+      <span class="vehicle-label">🔵 </span>
+      <span class="vehicle-value">Stop</span>
+    </div>
+    <div class="vehicle-row">
+      <span class="vehicle-label"><span style="color: #FFD700;">▬</span></span>
+      <span class="vehicle-value">Time gap/GPS jump</span>
+    </div>
+  </div>
+
+<script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+<script>
+$(document).ready(function(){
+  $('#deviceSelect').select2({ placeholder:'Search Device ID', allowClear:true });
+  fetch('get_device_ids.php').then(r=>r.json()).then(dev=>{
+    let sel = $('#deviceSelect').empty().append('<option value=""></option>');
+    dev.forEach(d=> sel.append(new Option(d,d)));
+  });
+  
+  // Set current date and time limits
+  const now = new Date();
+  const today = now.toISOString().split('T')[0];
+  const currentTime = now.toTimeString().split(' ')[0].substring(0,5);
+  
+  $('#dateInput').val(today).attr('max', today);
+  $('#fromTime').val('00:00');
+  $('#toTime').val(currentTime);
+});
+
+let map = L.map('map').setView([13.05,80.25],11);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+// Bus icon
+const busIcon = L.icon({
+  iconUrl: 'https://cdn-icons-png.flaticon.com/512/9434/9434847.png',
+  iconSize: [32, 32],
+  iconAnchor: [16, 16],
+  popupAnchor: [0, -16]
+});
+
+let poly = L.polyline([], { color:'#003d00', weight:4 }).addTo(map);
+let marker=null, speedMarker=null;
+let route=[], idx=0, intervalId=null, stepSpeed=500;
+let drawnPts=0, drawnDist=0, lastLL=null;
+let stayCount={}, overlays=[];
+
+$('#speedControl').change(function(){
+  stepSpeed = +this.value;
+  if(intervalId) playRoute();
+});
+
+function playRoute(){
+  pauseRoute();
+  $('#showBtn').prop('disabled', true).text('Playing...');
+  intervalId = setInterval(()=>{ 
+    if(idx<route.length) drawPt(idx++); 
+    else {
+      clearInterval(intervalId);
+      $('#showBtn').prop('disabled', false).text('Show');
+    }
+  }, stepSpeed);
+}
+
+function pauseRoute(){ 
+  clearInterval(intervalId); 
+  $('#showBtn').prop('disabled', false).text('Show');
+}
+function stepForward(){ if(idx<route.length) drawPt(idx++); }
+
+function stepBackward () {
+  if (idx > 1) {
+    idx--;
+
+    // redraw trace up to the new index
+    poly.setLatLngs(route.slice(0, idx).map(p => [p.lat, p.lon]));
+
+    const p = route[idx - 1];          // new current point
+    marker      && marker.setLatLng([p.lat, p.lon]);
+    speedMarker && speedMarker.setLatLng([p.lat, p.lon]);
+
+    drawnPts  = idx;
+    drawnDist = calcDist(route.slice(0, idx));
+    lastLL    = idx > 1 ? L.latLng(route[idx - 2].lat, route[idx - 2].lon) : null;
+
+    // remove overlays that are now beyond the truncated trace
+    overlays.forEach(o => { if (o.index >= idx) map.removeLayer(o.layer); });
+    overlays = overlays.filter(o => o.index < idx);
+
+    /* ---------- NEW: keep stoppage “end” time in sync ---------- */
+    Object.keys(stayCount).forEach(key => {
+      if (stayCount[key].marked) {
+        // the last point still on the map is route[idx-1]
+        stayCount[key].end = p.timestamp;
+      }
+    });
+
+    updateInfo();
+  }
+}
+
+function parseTimeToSeconds(timeString) {
+  // Convert HH:MM:SS to total seconds
+  const parts = timeString.split(':');
+  const hours = parseInt(parts[0]) || 0;
+  const minutes = parseInt(parts[1]) || 0;
+  const seconds = parseInt(parts[2]) || 0;
+  return hours * 3600 + minutes * 60 + seconds;
+}
+
+function formatTimeDifference(seconds) {
+  if (seconds < 60) {
+    return `${seconds}s`;
+  }
+  
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+  
+  if (remainingSeconds > 0) {
+    return `${minutes}m ${remainingSeconds}s`;
+  } else {
+    return `${minutes}m`;
+  }
+}
+
+function drawPt(i){
+  let p = route[i], ll=[p.lat,p.lon];
+  poly.addLatLng(ll);
+  
+  // Add timestamp tooltip to marker with bus icon
+  if(!marker) {
+    marker = L.marker(ll, { icon: busIcon }).addTo(map);
+    marker.bindTooltip(`Time: ${p.time || p.timestamp}`, {
+      direction: 'top',
+      sticky: true,
+      offset: [0, -10],
+      className: 'timestamp-tooltip'
+    });
+  } else {
+    marker.setLatLng(ll);
+    marker.getTooltip().setContent(`Time: ${p.time || p.timestamp}`);
+  }
+
+ if(!speedMarker){
+  speedMarker = L.marker(ll,{
+    icon: L.divIcon({
+      className:'speed-popup-marker',
+      html:`<div class="speed-popup-box">${p.speed} Kmph</div>`,
+      iconSize: [60, 25],
+      iconAnchor: [30, 40]
+    })
+  }).addTo(map);
+} else {
+  speedMarker.setLatLng(ll).setIcon(L.divIcon({
+    className:'speed-popup-marker',
+    html:`<div class="speed-popup-box">${p.speed} Kmph</div>`,
+    iconSize: [60, 25],
+    iconAnchor: [30, 40]
+  }));
+}
+
+
+  map.panTo(ll);
+
+  if(lastLL && i > 0){
+    let prev = route[i-1];
+    
+    // Calculate time difference using time field (HH:MM:SS format)
+    let prevTime = prev.time || prev.timestamp.split(' ')[1] || prev.timestamp;
+    let currTime = p.time || p.timestamp.split(' ')[1] || p.timestamp;
+    
+    let prevTimeSeconds = parseTimeToSeconds(prevTime);
+    let currTimeSeconds = parseTimeToSeconds(currTime);
+    let timeDiffSeconds = currTimeSeconds - prevTimeSeconds;
+    
+    // Handle day rollover (if current time is less than previous, add 24 hours)
+    if (timeDiffSeconds < 0) {
+      timeDiffSeconds += 24 * 3600; // Add 24 hours in seconds
+    }
+    
+    let dist = L.latLng(ll).distanceTo(lastLL);
+
+    // Only show gaps for time differences > 2 minutes (120 seconds) 
+    // Do not show any GPS coordinate jumps regardless of time difference
+    if(timeDiffSeconds > 120 || dist > 500 ){
+      let line = L.polyline([[prev.lat,prev.lon],ll], {color:'#FFD700', weight:4, dashArray:'8,6'}).addTo(map);
+      let timeDiff = formatTimeDifference(timeDiffSeconds);
+      
+      // Add hover functionality to the line showing both time gap and GPS distance
+      line.bindTooltip(`From: ${prevTime}<br>To: ${currTime}<br>Time Gap: ${timeDiff}<br>GPS Gap: ${(dist/1000).toFixed(2)} km`, {
+  permanent: false,
+  direction: 'top',
+  sticky: true,
+  offset: [0, -10],
+  className: 'gap-tooltip'
+});
+      
+      overlays.push({index:i, layer:line});
+    }
+
+let key = `${p.lat.toFixed(4)},${p.lon.toFixed(4)}`;
+
+if(p.lat.toFixed(4) === prev.lat.toFixed(4) && p.lon.toFixed(4) === prev.lon.toFixed(4)){
+  // Same location - continue or start tracking stoppage
+  if(!stayCount[key]) {
+    stayCount[key] = {
+      count: 1,
+      start: prev.timestamp,  // Use PREVIOUS point as the actual start
+      end: p.timestamp,       // Current point as end
+      marked: false
+    };
+  } else {
+    stayCount[key].count++;
+    // DON'T update start time, only end time
+    stayCount[key].end = p.timestamp;
+  }
+  
+  // Mark as stoppage when we have enough consecutive points
+  if(stayCount[key].count >= 2 && !stayCount[key].marked){
+    stayCount[key].marked = true;
+    
+    // Calculate stoppage duration
+    let startTime = stayCount[key].start.split(' ')[1] || stayCount[key].start;
+    let endTime = stayCount[key].end.split(' ')[1] || stayCount[key].end;
+    
+    let startSeconds = parseTimeToSeconds(startTime);
+    let endSeconds = parseTimeToSeconds(endTime);
+    let durationSeconds = endSeconds - startSeconds;
+    
+    // Handle day rollover
+    if (durationSeconds < 0) {
+      durationSeconds += 24 * 3600;
+    }
+    
+    let duration = formatTimeDifference(durationSeconds);
+    
+    let dot = L.circle(ll,{radius:8,color:'blue',fillOpacity:0.7})
+      .bindTooltip(`<strong>Stoppage Details:</strong><br>Start: ${startTime}<br>End: ${endTime}<br>Duration: ${duration}`, {
+        permanent: false,
+        direction: 'top'
+      })
+      .addTo(map);
+    overlays.push({index:i, layer:dot});
+  }
+  
+  // Update existing marked stoppages with new end time (keep updating tooltip)
+  if(stayCount[key].marked) {
+    let stoppageDot = overlays.find(o => o.layer instanceof L.Circle && o.layer.getLatLng().equals(L.latLng(ll)));
+    if(stoppageDot) {
+      let startTime = stayCount[key].start.split(' ')[1] || stayCount[key].start;
+      let endTime = stayCount[key].end.split(' ')[1] || stayCount[key].end;
+      
+      let startSeconds = parseTimeToSeconds(startTime);
+      let endSeconds = parseTimeToSeconds(endTime);
+      let durationSeconds = endSeconds - startSeconds;
+      
+      if (durationSeconds < 0) {
+        durationSeconds += 24 * 3600;
+      }
+      
+      let duration = formatTimeDifference(durationSeconds);
+      
+      stoppageDot.layer.setTooltipContent(`<strong>Stoppage Details:</strong><br>Start: ${startTime}<br>End: ${endTime}<br>Duration: ${duration}`);
+    }
+  }
+} else {
+  // Vehicle moved - reset for this new location
+  stayCount[key] = {count: 1, start: p.timestamp, end: p.timestamp, marked: false};
+}
+
+
+    drawnDist += dist;
+  }
+
+  drawnPts++;
+  lastLL = L.latLng(ll);
+  updateInfo();
+}
+
+function loadRoute(){
+  pauseRoute();
+  poly.setLatLngs([]);
+  marker && map.removeLayer(marker);
+  speedMarker && map.removeLayer(speedMarker);
+  marker = speedMarker = null;
+  idx = drawnPts = drawnDist = 0;
+  lastLL = null;
+  stayCount = {};
+  overlays.forEach(o=>map.removeLayer(o.layer));
+  overlays = [];
+  $('#info').hide(); // Hide info initially
+
+  let dev = $('#deviceSelect').val(),
+      date = $('#dateInput').val(),
+      from = ($('#fromTime').val()||'00:00')+':00',
+      to = ($('#toTime').val()||'23:59')+':00';
+  if(!dev||!date) return alert('Select device & date');
+
+  $('#loader').css('display','flex');
+  fetch(`get_route_data.php?device_id=${dev}&date=${date.replace(/-/g,'')}&from=${from}&to=${to}`)
+    .then(r=>r.json()).then(data=>{
+      $('#loader').hide();
+      document.getElementById('v_no').innerText = data.vehicle.vehicle_no||'–';
+      document.getElementById('v_code').innerText = data.vehicle.vehicle_code||'–';
+      document.getElementById('v_depot').innerText = data.vehicle.depot||'–';
+      document.getElementById('v_route').innerText = data.vehicle.route_name||'–';
+      $('#vehicleOverlay').show();
+
+      route = data.points;
+      if(!route.length) return alert('No route data');
+      map.fitBounds(L.latLngBounds(route.map(p=>[p.lat,p.lon])));
+      drawPt(0);
+
+      const km = calcDist(route);
+      $('#info').attr('data-original',
+        `Total: ${route.length} points | GPS Distance: ${km.toFixed(2)} KM | Start: ${data.start_time} | End: ${data.end_time}`);
+      updateInfo();
+    })
+    .catch(()=>$('#loader').hide());
+}
+
+function updateInfo(){
+  const orig = $('#info').attr('data-original')||'';
+  $('#info').html(`${orig} | Progress: ${drawnPts} points drawn / ${(drawnDist/1000).toFixed(2)} km traced`).show();
+}
+
+function calcDist(arr){
+  let t=0; for(let i=1;i<arr.length;i++){
+    t += L.latLng(arr[i-1].lat,arr[i-1].lon).distanceTo([arr[i].lat,arr[i].lon]);
+  }
+  return t/1000;
+}
+</script>
+</body>
+</html>

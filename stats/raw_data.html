@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Download Device Data</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+    />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link
+      href="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/css/select2.min.css"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div class="container mt-5">
+      <h2 class="text-center">Download Device Data</h2>
+
+      <!-- Filters Section -->
+      <div class="row mt-4">
+        <div class="col-md-3">
+          <label for="startDate" class="form-label">Select Date:</label>
+          <input type="date" id="startDate" class="form-control" required />
+        </div>
+
+        <div class="col-md-3">
+         <label for="deviceID" class="form-label">Device ID:</label>
+        <select id="deviceID" class="form-control select2 form-label" required>
+  <option value="">Select Device</option>
+</select>
+        </div>
+
+        <div class="col-md-3 d-flex align-items-end">
+          <button id="downloadCsv" class="btn btn-primary w-100">
+            Download CSV
+          </button>
+        </div>
+      </div>
+
+      <!-- Table Section -->
+      <!-- <div class="mt-4">
+            <table class="table table-bordered">
+            <thead class="table-dark">
+                <tr>
+                <th>Date</th>
+                <th>Device ID</th>
+                <th>Temperature (°C)</th>
+                <th>Humidity (%)</th>
+                <th>Battery (%)</th>
+                </tr>
+            </thead>
+            <tbody id="dataTable">
+                <tr>
+                <td colspan="5" class="text-center">No data available</td>
+                </tr>
+            </tbody>
+            </table>
+        </div> -->
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/js/select2.min.js"></script>
+    <script>
+      function getISTDate() {
+        const nowUtc = new Date();
+        const istOffset = 330 * 60000; // 330 minutes * 60 seconds * 1000 milliseconds
+        const nowIst = new Date(nowUtc.getTime() + istOffset);
+
+        const year = nowIst.getFullYear();
+        const month = String(nowIst.getMonth() + 1).padStart(2, "0"); // Months are 0-indexed
+        const day = String(nowIst.getDate()).padStart(2, "0");
+
+        return `${year}-${month}-${day}`;
+      }
+
+      $(document).ready(function () {
+        // Set default dates
+        let today = getISTDate();
+        $("#startDate, #endDate").val(today);
+
+        // Fetch device IDs from the backend and initialize Select2 after data is loaded
+        function fetchDeviceIDs() {
+          $.ajax({
+            url: "get_devices.php", // API to get device IDs
+            type: "GET",
+            dataType: "json",
+            success: function (data) {
+              let deviceDropdown = $("#deviceID");
+              deviceDropdown.empty();
+              deviceDropdown.append('<option value="">Select Device</option>');
+
+              data.forEach(function (device) {
+                deviceDropdown.append(
+                  `<option value="${device.device_id}">${device.device_id}</option>`
+                );
+              });
+
+              // Initialize Select2 AFTER adding options
+              deviceDropdown.select2({
+                placeholder: "Select Device",
+                allowClear: true,
+                width: "100%",
+              });
+            },
+            error: function () {
+              alert("Failed to load device IDs.");
+            },
+          });
+        }
+
+        fetchDeviceIDs(); // Load devices on page load
+
+        // Function to download CSV
+        $("#downloadCsv").click(function () {
+          let startDate = $("#startDate").val();
+          let endDate = $("#endDate").val();
+          let deviceID = $("#deviceID").val().trim();
+
+          if (!startDate ) {
+            alert("Start Date and End Date are mandatory!");
+            return;
+          }
+          if (!deviceID) {
+    alert("Please select Device ID!");
+    $("#deviceID").select2("open"); // Automatically open Select2 dropdown
+    return;
+  }
+
+          // Prepare URL with parameters
+          let url = `download.php?start_date=${startDate}&end_date=${endDate}`;
+          if (deviceID) {
+            url += `&device_id=${deviceID}`;
+          }
+
+          window.location.href = url;
+        });
+      });
+    </script>
+  </body>
+</html>

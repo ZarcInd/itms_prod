@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Configuration Manager</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <style>
+      body {
+        background-color: #f8f9fa;
+      }
+      .container {
+        background: #ffffff;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+      }
+      h2 {
+        color: #007bff;
+      }
+      .btn-primary {
+        background-color: #007bff;
+        border-color: #007bff;
+      }
+      .btn-secondary {
+        background-color: #6c757d;
+        border-color: #6c757d;
+      }
+      .btn-danger {
+        background-color: #dc3545;
+        border-color: #dc3545;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container mt-5">
+      <h2 class="mb-4">Edit Configuration</h2>
+      <form id="configForm"></form>
+    </div>
+
+    <script>
+      $(document).ready(function () {
+        const id = new URLSearchParams(window.location.search).get("id");
+        const url = id ? `/config/view.php?id=${id}` : `/config/view.php`;
+
+        if (!id) {
+          document.write("Invalid URL");
+          return;
+        }
+
+        $.getJSON(url, function (response) {
+          if (response.status === "success") {
+            let rows = "";
+            $.each(response.data, function (name, config) {
+              console.log(config);
+              for (let key in config) {
+                config[key] = config[key] ?? "";
+              }
+
+              let selected0 = config.status == "0" ? "selected" : "";
+              let selected1 = config.status == "1" ? "selected" : "";
+              let details = `
+        <div class="row mb-3">
+          <input
+              type="hidden"
+              class="form-control"
+              name="imei"
+              readonly
+              value="${config.imei}"
+              required
+            />
+            <input
+              type="hidden"
+              class="form-control"
+              name="group_id"
+              readonly
+              value="${config.group_id}"
+              required
+            />
+          <!-- <div class="col-md-6">
+            <label for="IMEI" class="form-label">IMEI</label>
+            <input
+              type="text"
+              class="form-control"
+              id="imei"
+              name="imei"
+              readonly
+              value="${config.imei}"
+              required
+            />
+          </div> -->
+          <div class="col-md-6">
+            <label for="CONFIG_ID" class="form-label">ID</label>
+            <input
+              type="text"
+              class="form-control"
+              id="CONFIG_ID"
+              name="CONFIG_ID"
+              value="${config.config_id}"
+            />
+          </div>
+          <div class="col-md-6">
+            <label for="NAME" class="form-label">NAME</label>
+            <input
+              type="text"
+              class="form-control"
+              id="NAME"
+              name="NAME"
+              value="${config.name}"
+              required
+            />
+          </div>
+        </div>
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <label for="URL" class="form-label">URL</label>
+            <input type="text" class="form-control" id="URL" name="URL" value="${config.url}" />
+          </div>
+          <div class="col-md-6">
+            <label for="PORT" class="form-label">PORT</label>
+            <input type="number" class="form-control" id="PORT" name="PORT" value="${config.port}" />
+          </div>
+        </div>
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <label for="INTERVAL" class="form-label">INTERVAL</label>
+            <input
+              type="number"
+              class="form-control"
+              id="INTERVAL"
+              name="INTERVAL"
+              value="${config.interval}"
+            />
+          </div>
+          <div class="col-md-6">
+            <label for="DURATION" class="form-label">DURATION</label>
+            <input
+              type="number"
+              class="form-control"
+              id="DURATION"
+              name="DURATION"
+              value="${config.duration}"
+            />
+          </div>
+        </div>
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <label for="PAGE" class="form-label">PAGE</label>
+            <input type="text" class="form-control" id="PAGE" name="PAGE" value="${config.page}"/>
+          </div>
+          <div class="col-md-6">
+            <label for="TIMEFORMAT" class="form-label">TIMEFORMAT</label>
+            <input
+              type="text"
+              class="form-control"
+              id="TIMEFORMAT"
+              name="TIMEFORMAT"
+              value="${config.timeformat}"
+            />
+          </div>
+        </div>
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <label for="DATESTRING" class="form-label">DATESTRING</label>
+            <input
+              type="text"
+              class="form-control"
+              id="DATESTRING"
+              name="DATESTRING"
+              value="${config.datestring}"
+            />
+          </div>
+          <div class="col-md-6">
+            <label for="APIKEY" class="form-label">APIKEY</label>
+            <input type="text" class="form-control" id="APIKEY" name="APIKEY" value="${config.apiKey}"/>
+          </div>
+        </div>
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <label for="OTASTATUS" class="form-label">OTASTATUS</label>
+            <input
+              type="text"
+              class="form-control"
+              id="OTASTATUS"
+              name="OTASTATUS"
+              value="${config.otastatus}"
+            />
+          </div>
+          <div class="col-md-6">
+            <label for="IP" class="form-label">IP</label>
+            <input type="text" class="form-control" id="IP" name="IP" value="${config.ip}"/>
+          </div>
+        </div>
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <label for="HARSHALERTS" class="form-label">HARSHALERTS</label>
+            <input
+              type="text"
+              class="form-control"
+              id="HARSHALERTS"
+              name="HARSHALERTS"
+              value="${config.harshalerts}"
+            />
+          </div>
+          <div class="col-md-6">
+            <label for="STOREPACKET" class="form-label">STOREPACKET</label>
+            <input
+              type="text"
+              class="form-control"
+              id="STOREPACKET"
+              name="STOREPACKET"
+              value="${config.storepacket}"
+            />
+          </div>
+        </div>
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <label for="depo_name" class="form-label">Depo Name</label>
+            <input
+              type="text"
+              class="form-control"
+              id="depo_name"
+              name="depo_name"
+              value="${config.depo_name}"
+            />
+          </div>
+          <div class="col-md-6">
+            <label for="fleet_no" class="form-label">Fleet No</label>
+            <input
+              type="text"
+              class="form-control"
+              id="fleet_no"
+              name="fleet_no"
+              value="${config.fleet_no}"
+            />
+          </div>
+        </div>
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <label for="PROTOCOL" class="form-label">PROTOCOL</label>
+            <input
+              type="text"
+              class="form-control"
+              id="PROTOCOL"
+              name="PROTOCOL"
+              value="${config.protocol}"
+            />
+          </div>
+          <div class="col-md-6">
+            <label for="STATUS" class="form-label">STATUS</label>
+            <select class="form-select" id="STATUS" name="STATUS" selectedIndex="${config.imei}">
+              <option value="0" ${selected0}>Inactive</option>
+              <option value="1" ${selected1}>Active</option>
+            </select>
+          </div>
+        </div>
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <label for="TOPIC" class="form-label">TOPIC</label>
+            <input type="text" class="form-control" id="TOPIC" name="TOPIC" value="${config.topic}"/>
+          </div>
+          <!-- <div class="col-md-6">
+            <label for="STATUS" class="form-label">STATUS</label>
+            <select class="form-select" id="STATUS" name="STATUS">
+              <option value="1">Active</option>
+              <option value="0">Inactive</option>
+            </select>
+          </div> -->
+        </div>`;
+
+              try {
+                custom_fields = JSON.parse(config.custom_fields);
+                custom_fields.forEach((fields) => {
+                  console.log(fields);
+
+                  details += `
+              <div class="row mb-3 custom-field">
+                  <div class="col-md-5">
+                      <input type="text" class="form-control" form="no-exist" name="custom_keys[]" value=${fields["key"]} placeholder="FIELD NAME (UPPERCASE)" required>
+                  </div>
+                  <div class="col-md-5">
+                      <input type="text" class="form-control" form="no-exist" name="custom_values[]" value=${fields["value"]} placeholder="Field Value" required>
+                  </div>
+                  <div class="col-md-2">
+                      <button type="button" class="btn btn-danger removeField">Remove</button>
+                  </div>
+              </div>
+            `;
+                });
+              } catch (e) {}
+
+              details += `
+        <div id="customFields"></div>
+        <button type="button" class="btn btn-secondary" id="addField">
+          Add Custom Field
+        </button>
+        <button type="submit" class="btn btn-primary">
+          Save Configuration
+        </button>`;
+              rows += details;
+            });
+            $("#configForm").html(rows || "");
+
+            $("#addField").click(function () {
+              $("#customFields").append(`
+                    <div class="row mb-3 custom-field">
+                        <div class="col-md-5">
+                            <input type="text" class="form-control" form="no-exist" name="custom_keys[]" placeholder="FIELD NAME (UPPERCASE)" required>
+                        </div>
+                        <div class="col-md-5">
+                            <input type="text" class="form-control" form="no-exist" name="custom_values[]" placeholder="Field Value" required>
+                        </div>
+                        <div class="col-md-2">
+                            <button type="button" class="btn btn-danger removeField">Remove</button>
+                        </div>
+                    </div>
+                `);
+            });
+
+            $(document).on("click", ".removeField", function () {
+              $(this).closest(".custom-field").remove();
+            });
+          } else {
+          }
+        });
+
+        $("#configForm").submit(function (e) {
+          e.preventDefault();
+
+          let formData = new FormData(this);
+
+          // Collect custom fields in a structured JSON format
+          let customFields = [];
+          $(".custom-field").each(function () {
+            let key = $(this)
+              .find('input[name="custom_keys[]"]')
+              .val()
+              .toUpperCase();
+            let value = $(this).find('input[name="custom_values[]"]').val();
+            if (key && value) {
+              customFields.push({ key: key, value: value });
+            }
+          });
+
+          // Convert the custom fields array to a JSON string and append it
+          formData.append("custom_fields", JSON.stringify(customFields));
+
+          formData.append("id", id);
+
+          // Send data via AJAX
+          $.ajax({
+            url: "/config/edit.php",
+            type: "POST",
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function (response) {
+              let data = JSON.parse(response);
+              alert(data.message);
+              if (data.status === "success") {
+                window.location.url = "/config";
+              }
+            },
+          });
+        });
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,9 @@
+{
+    "name": "ilcoder/transport-system",
+    "description": "A performant TCP server to store data in DB",
+    "type": "project",
+    "license": "MIT",
+    "require": {
+        "workerman/workerman": "^5.1"
+    }
+}
