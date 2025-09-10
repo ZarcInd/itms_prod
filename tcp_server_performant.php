@@ -385,11 +385,18 @@ $tcp_worker->count = 0; // Adjust based on CPU cores
 $tcp_worker->onMessage = function ($connection, $input) {
     // Clean up the input string
     $input = trim($input);
+$packets = preg_split('/(?=&PEIS)/', $input, -1, PREG_SPLIT_NO_EMPTY);
+
+    foreach ($packets as $packet) {
+        $packet = trim($packet, ", \r\n");
+        if (empty($packet)) continue;
     // $output = insert_data_db($input);
     // $output = insert_raw_data_db($input);
     // echo $output;
-    $output2 = insert_data_db($input);
+    $output2 = insert_data_db($packet);
     echo ($output2["message"] ?? "NA");
+    updateVTSData($output2["data"] ?? null);
+    }
 // Extract device ID (IMEI) from output
     
     $data_array = explode(',', $input); // Adjust delimiter if necessary
