@@ -31,6 +31,25 @@ function connectDB()
 
 connectDB();
 
+function getLatestResponse()
+{
+    global $pdo;
+
+    try {
+        $stmt = $pdo->query("SELECT response_text FROM global_response ORDER BY id DESC LIMIT 1");
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($row) {
+            return $row['response_text'];
+        } else {
+            return "NO_RESPONSE_DEFINED\r\n"; // fallback if nothing saved yet
+        }
+    } catch (PDOException $e) {
+        echo "Error fetching response: " . $e->getMessage() . "\n";
+        return "ERROR\r\n";
+    }
+}
+
 // Function to return null if current value is not int
 function intOrNull($val)
 {
@@ -398,22 +417,11 @@ $packets = preg_split('/(?=&PEIS)/', $input, -1, PREG_SPLIT_NO_EMPTY);
     updateVTSData($output2["data"] ?? null);
     }
 // Extract device ID (IMEI) from output
-    
-    $data_array = explode(',', $input); // Adjust delimiter if necessary
-    $firmware_version = $data_array[4] ?? null;
-    $device_id = $data_array[5] ?? null;
-    
-    // Define your current batch of 50 IMEIs
-$current_batch_imeis = [ ];
-    // If firmware is "new", do NOT send a response
-    if ($firmware_version !== "IPC_MTC_v1.23_c") {
-    // Only send response if the device is in the current batch
-    if (in_array($device_id, $current_batch_imeis)) {
-        // Send customized response with device ID
-        $response_message ="&PEIS,OTA,{$device_id},DD/MM/YY,HH:MM:SS,13.127.240.235-21-itms_ftp-Prime_123-/MTC_IPC_V1.23_c/#\r\n";
-        $connection->send($response_message);
-    }
-}
+    $device_id = $output2["data"]["device_id"] ?? "Unknown";
+
+    // Construct response message
+    $response_message = getLatestResponse();
+    $connection->send($response_message);
 
     // Construct response message
    // $response_message =  "no string";
